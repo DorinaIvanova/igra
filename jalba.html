@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Игра: Жалба - 1. клас</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f9ff; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 8px solid #ffd700; max-width: 900px; width: 100%; text-align: center; }
+        
+        /* Текст и картинка един до друг */
+        .content-wrapper { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+        
+        .text-area { flex: 1; font-size: 1.5rem; line-height: 2; text-align: left; background: #fffde7; padding: 25px; border-radius: 20px; border: 3px dashed #ffb74d; min-width: 350px; }
+        
+        .image-area { flex: 0 0 320px; }
+        .image-area img { width: 100%; border-radius: 20px; border: 5px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* Полета за думи */
+        .drop-spot { display: inline-block; width: 130px; height: 40px; border-bottom: 4px solid #0288d1; margin: 0 5px; vertical-align: middle; background: #f5f5f5; border-radius: 8px; text-align: center; line-height: 40px; font-weight: bold; color: #0288d1; transition: 0.3s; }
+        
+        /* Лента с думи долу */
+        .word-bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 30px; padding: 20px; background: #e1f5fe; border-radius: 20px; min-height: 60px; }
+        .draggable-word { padding: 10px 20px; background: #0288d1; color: white; border-radius: 12px; cursor: grab; font-weight: bold; box-shadow: 0 5px #01579b; font-size: 1.2rem; }
+        .draggable-word:active { cursor: grabbing; transform: translateY(3px); box-shadow: 0 2px #01579b; }
+
+        .btn { padding: 15px 40px; font-size: 1.3rem; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 25px; background: #4caf50; color: white; box-shadow: 0 6px #388e3c; transition: 0.2s; }
+        .btn:hover { background: #45a049; transform: scale(1.05); }
+        #feedback { margin-top: 20px; font-size: 1.8rem; font-weight: bold; min-height: 40px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 style="color: #d32f2f;">📖 Подреди думите в текста</h1>
+
+    <div class="content-wrapper">
+        <div class="text-area">
+            <center><strong>Жалба</strong></center><br>
+            Гладни <span class="drop-spot" data-answer="врани"></span> сън не спали.<br>
+            Дружно <span class="drop-spot" data-answer="жалба"></span> те подали<br>
+            против Ежа <span class="drop-spot" data-answer="таралежа"></span>:<br>
+            – Ежко тук и там се свира.<br>
+            Тайно <span class="drop-spot" data-answer="крушите"></span> обира.<br>
+            – Искам аз да отбележа –<br>
+            наежил се <span class="drop-spot" data-answer="таралежът"></span>.<br>
+            – Крушите падат сами<br>
+            на моите остри <span class="drop-spot" data-answer="бодли"></span>.
+        </div>
+
+        <div class="image-area">
+            <img src="https://dorinaivanova.github.io/igra/1212.jpg" alt="Илюстрация">
+        </div>
+    </div>
+
+    <div class="word-bank" id="bank"></div>
+    <div id="feedback"></div>
+    <button class="btn" onclick="checkResults()">Провери ✅</button>
+</div>
+
+<script>
+    const words = ["врани", "жалба", "таралежа", "крушите", "таралежът", "бодли"];
+    const bank = document.getElementById('bank');
+    let draggedWordElement = null;
+
+    function createWord(text) {
+        const div = document.createElement('div');
+        div.className = 'draggable-word';
+        div.innerText = text;
+        div.draggable = true;
+        div.id = 'word-' + text;
+        div.ondragstart = (e) => {
+            draggedWordElement = div;
+            e.dataTransfer.setData("text", text);
+        };
+        return div;
+    }
+
+    // Зареждане на думите в банката
+    words.sort(() => Math.random() - 0.5).forEach(w => {
+        bank.appendChild(createWord(w));
+    });
+
+    // Настройка на зоните
+    document.querySelectorAll('.drop-spot').forEach(spot => {
+        spot.ondragover = (e) => e.preventDefault();
+        spot.ondrop = (e) => {
+            e.preventDefault();
+            const data = e.dataTransfer.setData("text", draggedWordElement.innerText);
+            
+            // Ако в спота вече има дума, връщаме я в банката
+            if (spot.innerText !== "") {
+                bank.appendChild(createWord(spot.innerText));
+            }
+
+            spot.innerText = draggedWordElement.innerText;
+            draggedWordElement.remove(); // Думата изчезва от лентата
+            spot.style.background = "#e3f2fd";
+        };
+
+        // Клик върху заето поле връща думата долу
+        spot.onclick = () => {
+            if (spot.innerText !== "") {
+                bank.appendChild(createWord(spot.innerText));
+                spot.innerText = "";
+                spot.style.background = "#f5f5f5";
+            }
+        };
+    });
+
+    function checkResults() {
+        let correctCount = 0;
+        const spots = document.querySelectorAll('.drop-spot');
+        
+        spots.forEach(spot => {
+            const currentVal = spot.innerText.trim();
+            const answer = spot.getAttribute('data-answer');
+
+            if (currentVal === answer) {
+                spot.style.color = "#2e7d32";
+                spot.style.borderBottom = "4px solid #2e7d32";
+                correctCount++;
+            } else if (currentVal !== "") {
+                // ГРЕШНА ДУМА: Връщаме я долу автоматично
+                bank.appendChild(createWord(currentVal));
+                spot.innerText = "";
+                spot.style.background = "#f5f5f5";
+                spot.style.borderBottom = "4px solid #d32f2f";
+            }
+        });
+
+        const f = document.getElementById('feedback');
+        if (correctCount === spots.length) {
+            f.innerHTML = "ОТЛИЧНО! Ти си истински откривател! 🎉🌟";
+            f.style.color = "#2e7d32";
+        } else {
+            f.innerHTML = "Опитай пак! Някои думи се върнаха долу. 🧐";
+            f.style.color = "#d32f2f";
+        }
+    }
+</script>
+
+</body>
+</html>

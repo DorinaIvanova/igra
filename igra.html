@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра с изречения</title>
+    <style>
+        body { font-family: 'Comic Sans MS', cursive, sans-serif; background-color: #f0f8ff; text-align: center; color: #333; }
+        .container { max-width: 800px; margin: 50px auto; padding: 20px; background: white; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 5px solid #FFD700; }
+        h1 { color: #FF4500; font-size: 2.5em; }
+        .instruction { font-size: 1.2em; margin-bottom: 20px; color: #4B0082; }
+        .word-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; min-height: 60px; }
+        .word { padding: 10px 20px; background-color: #00BFFF; color: white; border-radius: 10px; cursor: pointer; font-size: 1.5em; user-select: none; transition: transform 0.2s; box-shadow: 2px 4px 0px #008b8b; }
+        .word:hover { transform: scale(1.1); background-color: #1E90FF; }
+        .drop-zone { min-height: 80px; border: 3px dashed #ccc; border-radius: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; background-color: #fafafa; }
+        .word.in-zone { background-color: #32CD32; box-shadow: 2px 4px 0px #228B22; }
+        .feedback { font-size: 1.5em; font-weight: bold; margin: 20px; height: 30px; }
+        .btn { padding: 10px 25px; font-size: 1.2em; cursor: pointer; border: none; border-radius: 10px; margin: 5px; transition: 0.3s; }
+        .check-btn { background-color: #FF6347; color: white; }
+        .hint-btn { background-color: #FFD700; color: #333; }
+        .next-btn { background-color: #9370DB; color: white; display: none; }
+        .score-display { font-size: 1.2em; color: #555; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-container">
+    <h1>🌟 Весели изречения 🌟</h1>
+    <p class="instruction">Натисни думите в правилния ред, за да подредиш изречението!</p>
+    
+    <div id="word-pool" class="word-container"></div>
+    <div id="answer-zone" class="drop-zone"></div>
+    
+    <div id="feedback" class="feedback"></div>
+    
+    <button class="btn check-btn" onclick="checkAnswer()">Провери ✅</button>
+    <button class="btn hint-btn" onclick="showHint()">Помощ 💡</button>
+    <button id="next-button" class="btn next-btn" onclick="nextSentence()">Следващо ➡️</button>
+
+    <div class="score-display">Изречение: <span id="current-idx">1</span> от 5</div>
+</div>
+
+<script>
+    const sentences = [
+        "Какъв ден е днес?",
+        "Фонтанът е красив.",
+        "Имаш ли топъл шал?",
+        "Времето е ветровито.",
+        "Светофарът свети зелено."
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function loadSentence() {
+        const pool = document.getElementById('word-pool');
+        const zone = document.getElementById('answer-zone');
+        const feedback = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-button');
+        
+        pool.innerHTML = '';
+        zone.innerHTML = '';
+        feedback.innerHTML = '';
+        nextBtn.style.display = 'none';
+        
+        document.getElementById('current-idx').innerText = currentIndex + 1;
+
+        const originalWords = sentences[currentIndex].split(' ');
+        const shuffledWords = shuffle([...originalWords]);
+
+        shuffledWords.forEach(word => {
+            const wordEl = document.createElement('div');
+            wordEl.className = 'word';
+            wordEl.innerText = word;
+            wordEl.onclick = () => moveWord(wordEl);
+            pool.appendChild(wordEl);
+        });
+    }
+
+    function moveWord(el) {
+        const pool = document.getElementById('word-pool');
+        const zone = document.getElementById('answer-zone');
+        
+        if (el.parentElement === pool) {
+            el.classList.add('in-zone');
+            zone.appendChild(el);
+        } else {
+            el.classList.remove('in-zone');
+            pool.appendChild(el);
+        }
+    }
+
+    function checkAnswer() {
+        const zoneWords = Array.from(document.getElementById('answer-zone').children)
+                               .map(el => el.innerText)
+                               .join(' ');
+        const feedback = document.getElementById('feedback');
+        
+        if (zoneWords === sentences[currentIndex]) {
+            feedback.innerText = "Браво! Правилно! 🎉";
+            feedback.style.color = "green";
+            document.getElementById('next-button').style.display = 'inline-block';
+            score++;
+        } else {
+            feedback.innerText = "Опитай пак! 🤔";
+            feedback.style.color = "red";
+        }
+    }
+
+    function showHint() {
+        alert("Правилното изречение започва с: " + sentences[currentIndex].split(' ')[0]);
+    }
+
+    function nextSentence() {
+        currentIndex++;
+        if (currentIndex < sentences.length) {
+            loadSentence();
+        } else {
+            showSummary();
+        }
+    }
+
+    function showSummary() {
+        const container = document.getElementById('game-container');
+        container.innerHTML = `
+            <h1>Краен резултат 🏆</h1>
+            <p style="font-size: 2em;">Ти подреди всички изречения!</p>
+            <p style="font-size: 1.5em; color: #FF4500;">Твоят резултат е отличен!</p>
+            <button class="btn check-btn" onclick="location.reload()">Играй отново 🔄</button>
+        `;
+    }
+
+    loadSentence();
+</script>
+
+</body>
+</html>
